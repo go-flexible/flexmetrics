@@ -1,5 +1,7 @@
 # Metrics Server
 
+[![Go](https://github.com/go-flexible/flexmetrics/actions/workflows/go.yml/badge.svg?branch=develop)](https://github.com/go-flexible/flexmetrics/actions/workflows/go.yml)
+
 The package `go-flexible/flexmetrics` provides a default set of configuration for hosting prometheus and `pprof` metrics.
 
 ## Configuration
