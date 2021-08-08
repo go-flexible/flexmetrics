@@ -24,6 +24,10 @@ func ExampleServer_Run() {
 }
 
 func TestNew(t *testing.T) {
+	t.Cleanup(func() {
+		os.Unsetenv("METRICS_ADDR")
+		os.Unsetenv("METRICS_PROMETHEUS_PATH")
+	})
 	cases := []struct {
 		name             string
 		env              map[string]string
@@ -48,7 +52,7 @@ func TestNew(t *testing.T) {
 			expectedEndpoint: "/testmetrics",
 		},
 		{
-			name: "address is overriden in config",
+			name: "address is overridden in config",
 			config: &flexmetrics.Config{
 				Server: &http.Server{Addr: "0.0.0.0:2222"},
 			},
@@ -56,11 +60,11 @@ func TestNew(t *testing.T) {
 			expectedEndpoint: "/testmetrics",
 		},
 		{
-			name: "endpoint is overriden in config",
+			name: "endpoint is overridden in config but address is from env",
 			config: &flexmetrics.Config{
 				Path: "/zero",
 			},
-			expectedAddress:  "0.0.0.0:2222",
+			expectedAddress:  "0.0.0.0:1111",
 			expectedEndpoint: "/zero",
 		},
 	}
@@ -71,10 +75,10 @@ func TestNew(t *testing.T) {
 			}
 			srv := flexmetrics.New(tt.config)
 			if tt.expectedAddress != srv.Server.Addr {
-				t.Errorf("expected address %q, but got %q", tt.expectedAddress, srv.Server.Addr)
+				t.Errorf("%s: expected address %q, but got %q", tt.name, tt.expectedAddress, srv.Server.Addr)
 			}
 			if tt.expectedEndpoint != srv.Path {
-				t.Errorf("expected endpoint %q, but got %q", tt.expectedEndpoint, srv.Path)
+				t.Errorf("%s: expected endpoint %q, but got %q", tt.name, tt.expectedEndpoint, srv.Path)
 			}
 		})
 	}
