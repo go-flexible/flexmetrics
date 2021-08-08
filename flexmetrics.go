@@ -49,7 +49,6 @@ func New(config *Config) *Server {
 	return &Server{
 		Path:   path.Join("/", config.Path),
 		Server: config.Server,
-		addrC:  make(chan *net.TCPAddr, 1),
 	}
 }
 
@@ -57,7 +56,6 @@ func New(config *Config) *Server {
 type Server struct {
 	Path   string
 	Server *http.Server
-	addrC  chan *net.TCPAddr
 }
 
 // Run will start the metrics server.
