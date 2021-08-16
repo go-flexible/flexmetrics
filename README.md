@@ -16,17 +16,17 @@ The metric server can be configured through the environment to match setup in th
 ### Starting server and exposing metrics
 
 ```go
-# Rely on the package defaults
+// Rely on the package defaults
 srv := flexmetrics.New()
 srv.Run(ctx)
 
-# Or bring your own
+// Or bring your own
 httpServer := &http.Server{
-  Addr: ":8081",
+        Addr: ":8081",
 }
 srv := flexmetrics.New(
-  flexmetrics.WithServer(httpServer),
-  flexmetrics.WithPath("/__/metrics"),
+        flexmetrics.WithServer(httpServer),
+        flexmetrics.WithPath("/__/metrics"),
 )
 srv.Run(ctx)
 ```
