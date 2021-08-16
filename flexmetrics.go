@@ -32,20 +32,30 @@ const (
 	DefaultWriteTimeout = 15 * time.Second
 )
 
+// Option is a type of func that allows you change defaults of the *Server
+// returned by New.
 type Option func(s *Server)
 
+// WithPath allows you to specify the path Prometheus metrics should be served
+// on. If provided, this option will override the use of
+// METRICS_PROMETHEUS_PATH environment variable.
 func WithPath(path string) Option {
 	return func(s *Server) {
 		s.Path = path
 	}
 }
 
+// WithAddr allows you to specify the address the HTTP server should bind to.
+// If provided, this option will override the use of METRICS_ADDR environment
+// variable.
 func WithAddr(addr string) Option {
 	return func(s *Server) {
 		s.Server.Addr = addr
 	}
 }
 
+// WithServer allows you to provide your own HTTP server to be used to serve
+// metrics.
 func WithServer(server *http.Server) Option {
 	return func(s *Server) {
 		s.Server = server
