@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/pprof"
 	"os"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -17,6 +18,18 @@ const (
 
 	// DefaultPath is the path where we expose prometheus by default.
 	DefaultPath = "/metrics"
+
+	// DefaultReadTimeout is the default read timeout for the http server.
+	DefaultReadTimeout = 5 * time.Second
+
+	// DefaultReadHeaderTimeout is the default read header timeout for the http server.
+	DefaultReadHeaderTimeout = 1 * time.Second
+
+	// DefaultIdleTimeout is the default idle timeout for the http server.
+	DefaultIdleTimeout = 1 * time.Second
+
+	// DefaultWriteTimeout is the default write timeout for the http server.
+	DefaultWriteTimeout = 15 * time.Second
 )
 
 type Option func(s *Server)
@@ -54,7 +67,11 @@ func New(options ...Option) *Server {
 	server := &Server{
 		Path: path,
 		Server: &http.Server{
-			Addr: addr,
+			Addr:              addr,
+			ReadTimeout:       DefaultReadTimeout,
+			ReadHeaderTimeout: DefaultReadHeaderTimeout,
+			IdleTimeout:       DefaultIdleTimeout,
+			WriteTimeout:      DefaultWriteTimeout,
 		},
 	}
 
