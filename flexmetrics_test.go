@@ -2,24 +2,16 @@ package flexmetrics_test
 
 import (
 	"context"
-	"net/http"
 	"os"
 	"testing"
 
 	"github.com/go-flexible/flexmetrics"
 )
 
-var (
-	ctx context.Context
-)
+var ctx context.Context
 
 func ExampleServer_Run() {
-	srv := flexmetrics.New(&flexmetrics.Config{
-		Server: &http.Server{
-			Addr: "0.0.0.0:5117",
-		},
-		Path: "/metrics",
-	})
+	srv := flexmetrics.New()
 	_ = srv.Run(ctx)
 }
 
@@ -31,7 +23,7 @@ func TestNew(t *testing.T) {
 	cases := []struct {
 		name             string
 		env              map[string]string
-		config           *flexmetrics.Config
+		options          []flexmetrics.Option
 		expectedAddress  string
 		expectedEndpoint string
 	}{
@@ -41,28 +33,28 @@ func TestNew(t *testing.T) {
 				"METRICS_ADDR":            "0.0.0.0:1111",
 				"METRICS_PROMETHEUS_PATH": "/testmetrics",
 			},
-			config:           nil,
+			options:          nil,
 			expectedAddress:  "0.0.0.0:1111",
 			expectedEndpoint: "/testmetrics",
 		},
 		{
-			name:             "default config doesn't override environment",
-			config:           &flexmetrics.Config{},
+			name:             "no options provided overriding environment",
+			options:          nil,
 			expectedAddress:  "0.0.0.0:1111",
 			expectedEndpoint: "/testmetrics",
 		},
 		{
-			name: "address is overridden in config",
-			config: &flexmetrics.Config{
-				Server: &http.Server{Addr: "0.0.0.0:2222"},
+			name: "address is overridden with option",
+			options: []flexmetrics.Option{
+				flexmetrics.WithAddr("0.0.0.0:2222"),
 			},
 			expectedAddress:  "0.0.0.0:2222",
 			expectedEndpoint: "/testmetrics",
 		},
 		{
 			name: "endpoint is overridden in config but address is from env",
-			config: &flexmetrics.Config{
-				Path: "/zero",
+			options: []flexmetrics.Option{
+				flexmetrics.WithPath("/zero"),
 			},
 			expectedAddress:  "0.0.0.0:1111",
 			expectedEndpoint: "/zero",
@@ -73,7 +65,7 @@ func TestNew(t *testing.T) {
 			for key, val := range tt.env {
 				os.Setenv(key, val)
 			}
-			srv := flexmetrics.New(tt.config)
+			srv := flexmetrics.New(tt.options...)
 			if tt.expectedAddress != srv.Server.Addr {
 				t.Errorf("%s: expected address %q, but got %q", tt.name, tt.expectedAddress, srv.Server.Addr)
 			}

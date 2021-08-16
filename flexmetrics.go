@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/http/pprof"
 	"os"
-	"path"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -20,36 +19,50 @@ const (
 	DefaultPath = "/metrics"
 )
 
-// Config represents the configuration for the metrics server.
-type Config struct {
-	Path   string
-	Server *http.Server
+type Option func(s *Server)
+
+func WithPath(path string) Option {
+	return func(s *Server) {
+		s.Path = path
+	}
+}
+
+func WithAddr(addr string) Option {
+	return func(s *Server) {
+		s.Server.Addr = addr
+	}
+}
+
+func WithServer(server *http.Server) Option {
+	return func(s *Server) {
+		s.Server = server
+	}
 }
 
 // New creates a new default metrics server.
-func New(config *Config) *Server {
-	if config == nil {
-		config = &Config{}
+func New(options ...Option) *Server {
+	path := os.Getenv("METRICS_PROMETHEUS_PATH")
+	if path == "" {
+		path = DefaultPath
 	}
-	if prometheusPath := os.Getenv("METRICS_PROMETHEUS_PATH"); prometheusPath != "" && config.Path == "" {
-		config.Path = prometheusPath
+
+	addr := os.Getenv("METRICS_ADDR")
+	if addr == "" {
+		addr = DefaultAddr
 	}
-	if config.Path == "" {
-		config.Path = DefaultPath
+
+	server := &Server{
+		Path: path,
+		Server: &http.Server{
+			Addr: addr,
+		},
 	}
-	if config.Server == nil {
-		config.Server = &http.Server{}
+
+	for _, option := range options {
+		option(server)
 	}
-	if addr := os.Getenv("METRICS_ADDR"); addr != "" && config.Server.Addr == "" {
-		config.Server.Addr = addr
-	}
-	if config.Server.Addr == "" {
-		config.Server.Addr = DefaultAddr
-	}
-	return &Server{
-		Path:   path.Join("/", config.Path),
-		Server: config.Server,
-	}
+
+	return server
 }
 
 // Server represents a prometheus metrics server.
