@@ -2,6 +2,7 @@ package flexmetrics_test
 
 import (
 	"context"
+	"net/http"
 	"os"
 	"testing"
 
@@ -73,5 +74,13 @@ func TestNew(t *testing.T) {
 				t.Errorf("%s: expected endpoint %q, but got %q", tt.name, tt.expectedEndpoint, srv.Path)
 			}
 		})
+	}
+}
+
+func TestOption_WithServer(t *testing.T) {
+	myServer := &http.Server{}
+	s := flexmetrics.New(flexmetrics.WithServer(myServer))
+	if s.Server != myServer {
+		t.Error("WithServer option should set the provided http server")
 	}
 }
