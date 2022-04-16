@@ -2,7 +2,6 @@ package flexmetrics
 
 import (
 	"context"
-	"log"
 	"net"
 	"net/http"
 	"net/http/pprof"
@@ -62,6 +61,18 @@ func WithServer(server *http.Server) Option {
 	}
 }
 
+// Logger defines any logger able to call Printf.
+type Logger interface {
+	Printf(format string, v ...interface{})
+}
+
+// WithLogger allows you to set a logger for the server.
+func WithLogger(l Logger) Option {
+	return func(s *Server) {
+		s.logger = l
+	}
+}
+
 // New creates a new default metrics server.
 func New(options ...Option) *Server {
 	path := os.Getenv("METRICS_PROMETHEUS_PATH")
@@ -94,8 +105,9 @@ func New(options ...Option) *Server {
 
 // Server represents a prometheus metrics server.
 type Server struct {
-	Path   string
+	logger Logger
 	Server *http.Server
+	Path   string
 }
 
 // Run will start the metrics server.
@@ -114,12 +126,12 @@ func (s *Server) Run(_ context.Context) error {
 	mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
 
 	s.Server.Handler = mux
-	log.Printf("serving profiling and prometheus metrics over http on http://%s%s", s.Server.Addr, s.Path)
+	s.logger.Printf("serving profiling and prometheus metrics over http on http://%s%s", s.Server.Addr, s.Path)
 	return s.Server.Serve(lis)
 }
 
 // Halt will attempt to gracefully shut down the server.
 func (s *Server) Halt(ctx context.Context) error {
-	log.Printf("stopping serving profiling and prometheus metrics over http on http://%s...", s.Server.Addr)
+	s.logger.Printf("stopping serving profiling and prometheus metrics over http on http://%s...", s.Server.Addr)
 	return s.Server.Shutdown(ctx)
 }
