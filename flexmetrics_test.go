@@ -1,9 +1,13 @@
 package flexmetrics_test
 
 import (
+	"bytes"
 	"context"
+	"io"
+	"log"
 	"net/http"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/go-flexible/flexmetrics"
@@ -82,5 +86,32 @@ func TestOption_WithServer(t *testing.T) {
 	s := flexmetrics.New(flexmetrics.WithServer(myServer))
 	if s.Server != myServer {
 		t.Error("WithServer option should set the provided http server")
+	}
+}
+
+func TestOption_WithLogger(t *testing.T) {
+	var buf bytes.Buffer
+
+	w := io.MultiWriter(&buf, os.Stderr)     // so we get console output.
+	logger := log.New(w, "TEST_LOGGER: ", 0) // so we get consistent output.
+
+	metrics := flexmetrics.New(
+		flexmetrics.WithAddr("127.0.0.1:"),
+		flexmetrics.WithLogger(logger),
+	)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	go func() {
+		_ = metrics.Run(ctx)
+	}()
+	_ = metrics.Halt(ctx)
+
+	t.Log(buf.String())
+
+	// ugly? yes, but, it will do.
+	if !strings.Contains(buf.String(), "TEST_LOGGER: ") {
+		t.Fatal("expected log message to contain prefix")
 	}
 }
