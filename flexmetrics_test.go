@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/go-flexible/flexmetrics"
 )
@@ -82,7 +83,7 @@ func TestNew(t *testing.T) {
 }
 
 func TestOption_WithServer(t *testing.T) {
-	myServer := &http.Server{}
+	myServer := &http.Server{ReadHeaderTimeout: time.Second}
 	s := flexmetrics.New(flexmetrics.WithServer(myServer))
 	if s.Server != myServer {
 		t.Error("WithServer option should set the provided http server")
