@@ -2,6 +2,7 @@ package flexmetrics
 
 import (
 	"context"
+	"log"
 	"net"
 	"net/http"
 	"net/http/pprof"
@@ -30,6 +31,9 @@ const (
 	// DefaultWriteTimeout is the default write timeout for the http server.
 	DefaultWriteTimeout = 15 * time.Second
 )
+
+// default package logger to be used if no logger is provided.
+var logger = log.New(os.Stderr, "flexmetrics: ", 0)
 
 // Option is a type of func that allows you change defaults of the *Server
 // returned by New.
@@ -86,7 +90,8 @@ func New(options ...Option) *Server {
 	}
 
 	server := &Server{
-		Path: path,
+		logger: logger,
+		Path:   path,
 		Server: &http.Server{
 			Addr:              addr,
 			ReadTimeout:       DefaultReadTimeout,
