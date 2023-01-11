@@ -107,6 +107,7 @@ func TestOption_WithLogger(t *testing.T) {
 	go func() {
 		_ = metrics.Run(ctx)
 	}()
+	time.Sleep(time.Second)
 	_ = metrics.Halt(ctx)
 
 	t.Log(buf.String())
