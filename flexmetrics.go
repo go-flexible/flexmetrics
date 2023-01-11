@@ -45,7 +45,7 @@ type Option func(s *Server)
 // METRICS_PROMETHEUS_PATH environment variable.
 func WithPath(path string) Option {
 	return func(s *Server) {
-		s.Path = path
+		s.path = path
 	}
 }
 
@@ -54,7 +54,7 @@ func WithPath(path string) Option {
 // variable.
 func WithAddr(addr string) Option {
 	return func(s *Server) {
-		s.Server.Addr = addr
+		s.server.Addr = addr
 	}
 }
 
@@ -62,7 +62,7 @@ func WithAddr(addr string) Option {
 // metrics.
 func WithServer(server *http.Server) Option {
 	return func(s *Server) {
-		s.Server = server
+		s.server = server
 	}
 }
 
@@ -91,9 +91,9 @@ func New(options ...Option) *Server {
 	}
 
 	server := &Server{
+		path: path,
+		server: &http.Server{
 		logger: logger,
-		Path:   path,
-		Server: &http.Server{
 			Addr:              addr,
 			ReadTimeout:       DefaultReadTimeout,
 			ReadHeaderTimeout: DefaultReadHeaderTimeout,
@@ -112,8 +112,8 @@ func New(options ...Option) *Server {
 // Server represents a prometheus metrics server.
 type Server struct {
 	logger Logger
-	Server *http.Server
-	Path   string
+	server *http.Server
+	path   string
 }
 
 // serverAddrKeyType is a type used to store the server address in the context.
@@ -124,28 +124,28 @@ const serverAddrKey serverAddrKeyType = "serverAddr"
 
 // Run will start the metrics server.
 func (s *Server) Run(ctx context.Context) error {
-	lis, err := net.Listen("tcp", s.Server.Addr)
+	lis, err := net.Listen("tcp", s.server.Addr)
 	if err != nil {
 		return err
 	}
 
 	// use the provided context for the server
-	s.Server.BaseContext = func(lis net.Listener) context.Context {
+	s.server.BaseContext = func(lis net.Listener) context.Context {
 		ctx = context.WithValue(ctx, serverAddrKey, lis.Addr().String())
 		return ctx
 	}
 
 	mux := http.NewServeMux()
-	mux.Handle(s.Path, promhttp.Handler())
+	mux.Handle(s.path, promhttp.Handler())
 	mux.HandleFunc("/debug/pprof/", pprof.Index)
 	mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
 	mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
 	mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
 	mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
 
-	s.Server.Handler = mux
-	s.logger.Printf("serving profiling and prometheus metrics over http on http://%s%s", lis.Addr().String(), s.Path)
-	return s.Server.Serve(lis)
+	s.server.Handler = mux
+	s.logger.Printf("serving profiling and prometheus metrics over http on http://%s%s", lis.Addr().String(), s.path)
+	return s.server.Serve(lis)
 }
 
 // Halt will attempt to gracefully shut down the server.
@@ -154,6 +154,6 @@ func (s *Server) Halt(ctx context.Context) error {
 	if !ok {
 		return fmt.Errorf("listener address not found in context")
 	}
-	s.logger.Printf("stopping serving profiling and prometheus metrics over http on http://%s%s", listenerAddress, s.Path)
-	return s.Server.Shutdown(ctx)
+	s.logger.Printf("stopping serving profiling and prometheus metrics over http on http://%s%s", listenerAddress, s.path)
+	return s.server.Shutdown(ctx)
 }
