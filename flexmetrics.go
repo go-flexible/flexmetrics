@@ -91,9 +91,9 @@ func New(options ...Option) *Server {
 	}
 
 	server := &Server{
-		path: path,
-		server: &http.Server{
 		logger: logger,
+		path:   path,
+		server: &http.Server{
 			Addr:              addr,
 			ReadTimeout:       DefaultReadTimeout,
 			ReadHeaderTimeout: DefaultReadHeaderTimeout,
