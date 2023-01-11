@@ -82,8 +82,7 @@ func TestNew(t *testing.T) {
 
 func TestOption_WithServer(t *testing.T) {
 	myServer := &http.Server{ReadHeaderTimeout: time.Second}
-	s := New(WithServer(myServer))
-	if s.server != myServer {
+	if s := New(WithServer(myServer)); s.server != myServer {
 		t.Error("WithServer option should set the provided http server")
 	}
 }
