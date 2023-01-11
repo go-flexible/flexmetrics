@@ -1,4 +1,4 @@
-package flexmetrics_test
+package flexmetrics
 
 import (
 	"bytes"
@@ -10,14 +10,12 @@ import (
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/go-flexible/flexmetrics"
 )
 
 var ctx context.Context
 
 func ExampleServer_Run() {
-	srv := flexmetrics.New()
+	srv := New()
 	_ = srv.Run(ctx)
 }
 
@@ -29,7 +27,7 @@ func TestNew(t *testing.T) {
 	cases := []struct {
 		name             string
 		env              map[string]string
-		options          []flexmetrics.Option
+		options          []Option
 		expectedAddress  string
 		expectedEndpoint string
 	}{
@@ -51,16 +49,16 @@ func TestNew(t *testing.T) {
 		},
 		{
 			name: "address is overridden with option",
-			options: []flexmetrics.Option{
-				flexmetrics.WithAddr("0.0.0.0:2222"),
+			options: []Option{
+				WithAddr("0.0.0.0:2222"),
 			},
 			expectedAddress:  "0.0.0.0:2222",
 			expectedEndpoint: "/testmetrics",
 		},
 		{
 			name: "endpoint is overridden in config but address is from env",
-			options: []flexmetrics.Option{
-				flexmetrics.WithPath("/zero"),
+			options: []Option{
+				WithPath("/zero"),
 			},
 			expectedAddress:  "0.0.0.0:1111",
 			expectedEndpoint: "/zero",
@@ -71,12 +69,12 @@ func TestNew(t *testing.T) {
 			for key, val := range tt.env {
 				os.Setenv(key, val)
 			}
-			srv := flexmetrics.New(tt.options...)
-			if tt.expectedAddress != srv.Server.Addr {
-				t.Errorf("%s: expected address %q, but got %q", tt.name, tt.expectedAddress, srv.Server.Addr)
+			srv := New(tt.options...)
+			if tt.expectedAddress != srv.server.Addr {
+				t.Errorf("%s: expected address %q, but got %q", tt.name, tt.expectedAddress, srv.server.Addr)
 			}
-			if tt.expectedEndpoint != srv.Path {
-				t.Errorf("%s: expected endpoint %q, but got %q", tt.name, tt.expectedEndpoint, srv.Path)
+			if tt.expectedEndpoint != srv.path {
+				t.Errorf("%s: expected endpoint %q, but got %q", tt.name, tt.expectedEndpoint, srv.path)
 			}
 		})
 	}
@@ -84,8 +82,8 @@ func TestNew(t *testing.T) {
 
 func TestOption_WithServer(t *testing.T) {
 	myServer := &http.Server{ReadHeaderTimeout: time.Second}
-	s := flexmetrics.New(flexmetrics.WithServer(myServer))
-	if s.Server != myServer {
+	s := New(WithServer(myServer))
+	if s.server != myServer {
 		t.Error("WithServer option should set the provided http server")
 	}
 }
@@ -96,9 +94,9 @@ func TestOption_WithLogger(t *testing.T) {
 	w := io.MultiWriter(&buf, os.Stderr)     // so we get console output.
 	logger := log.New(w, "TEST_LOGGER: ", 0) // so we get consistent output.
 
-	metrics := flexmetrics.New(
-		flexmetrics.WithAddr("127.0.0.1:"),
-		flexmetrics.WithLogger(logger),
+	metrics := New(
+		WithAddr("127.0.0.1:"),
+		WithLogger(logger),
 	)
 
 	ctx, cancel := context.WithCancel(context.Background())
