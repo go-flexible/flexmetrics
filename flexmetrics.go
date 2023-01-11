@@ -110,9 +110,10 @@ func New(options ...Option) *Server {
 
 // Server represents a prometheus metrics server.
 type Server struct {
-	logger Logger
-	Server *http.Server
-	Path   string
+	logger          Logger
+	listenerAddress string
+	Server          *http.Server
+	Path            string
 }
 
 // Run will start the metrics server.
@@ -121,6 +122,8 @@ func (s *Server) Run(_ context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	s.listenerAddress = lis.Addr().String()
 
 	mux := http.NewServeMux()
 	mux.Handle(s.Path, promhttp.Handler())
@@ -131,12 +134,12 @@ func (s *Server) Run(_ context.Context) error {
 	mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
 
 	s.Server.Handler = mux
-	s.logger.Printf("serving profiling and prometheus metrics over http on http://%s%s", s.Server.Addr, s.Path)
+	s.logger.Printf("serving profiling and prometheus metrics over http on http://%s%s", s.listenerAddress, s.Path)
 	return s.Server.Serve(lis)
 }
 
 // Halt will attempt to gracefully shut down the server.
 func (s *Server) Halt(ctx context.Context) error {
-	s.logger.Printf("stopping serving profiling and prometheus metrics over http on http://%s...", s.Server.Addr)
+	s.logger.Printf("stopping serving profiling and prometheus metrics over http on http://%s%s", s.listenerAddress, s.Path)
 	return s.Server.Shutdown(ctx)
 }
