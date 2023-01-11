@@ -2,6 +2,7 @@ package flexmetrics
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -14,7 +15,7 @@ import (
 
 const (
 	// DefaultAddr is the port that we listen to the prometheus path on by default.
-	DefaultAddr = "0.0.0.0:2112"
+	DefaultAddr = "0.0.0.0:9090"
 
 	// DefaultPath is the path where we expose prometheus by default.
 	DefaultPath = "/metrics"
@@ -110,20 +111,29 @@ func New(options ...Option) *Server {
 
 // Server represents a prometheus metrics server.
 type Server struct {
-	logger          Logger
-	listenerAddress string
-	Server          *http.Server
-	Path            string
+	logger Logger
+	Server *http.Server
+	Path   string
 }
 
+// serverAddrKeyType is a type used to store the server address in the context.
+type serverAddrKeyType string
+
+// serverAddrKey is the key used to store the server address in the context.
+const serverAddrKey serverAddrKeyType = "serverAddr"
+
 // Run will start the metrics server.
-func (s *Server) Run(_ context.Context) error {
+func (s *Server) Run(ctx context.Context) error {
 	lis, err := net.Listen("tcp", s.Server.Addr)
 	if err != nil {
 		return err
 	}
 
-	s.listenerAddress = lis.Addr().String()
+	// use the provided context for the server
+	s.Server.BaseContext = func(lis net.Listener) context.Context {
+		ctx = context.WithValue(ctx, serverAddrKey, lis.Addr().String())
+		return ctx
+	}
 
 	mux := http.NewServeMux()
 	mux.Handle(s.Path, promhttp.Handler())
@@ -134,12 +144,16 @@ func (s *Server) Run(_ context.Context) error {
 	mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
 
 	s.Server.Handler = mux
-	s.logger.Printf("serving profiling and prometheus metrics over http on http://%s%s", s.listenerAddress, s.Path)
+	s.logger.Printf("serving profiling and prometheus metrics over http on http://%s%s", lis.Addr().String(), s.Path)
 	return s.Server.Serve(lis)
 }
 
 // Halt will attempt to gracefully shut down the server.
 func (s *Server) Halt(ctx context.Context) error {
-	s.logger.Printf("stopping serving profiling and prometheus metrics over http on http://%s%s", s.listenerAddress, s.Path)
+	listenerAddress, ok := ctx.Value(serverAddrKey).(string)
+	if !ok {
+		return fmt.Errorf("listener address not found in context")
+	}
+	s.logger.Printf("stopping serving profiling and prometheus metrics over http on http://%s%s", listenerAddress, s.Path)
 	return s.Server.Shutdown(ctx)
 }

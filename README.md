@@ -9,7 +9,7 @@ The package `go-flexible/flexmetrics` provides a default set of configuration fo
 
 The metric server can be configured through the environment to match setup in the infrastructure.
 
-- `PROMETHEUS_ADDR` default: `:2112`
+- `PROMETHEUS_ADDR` default: `:9090`
 - `PROMETHEUS_PATH` default: `/metrics`
 
 ## Examples
