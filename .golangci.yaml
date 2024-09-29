@@ -67,28 +67,6 @@ linters-settings:
   nakedret:
     # never, ever do naked returns.
     max-func-lines: 1 # default is 30
-  
-  tagliatelle:
-    case:
-      use-field-name: true
-      rules:
-        json: snake
-  
-  promlinter:
-    strict: true
-
-  rowserrcheck:
-    packages:
-      - "github.com/jmoiron/sqlx"
-
-  spancheck:
-    checks:
-      - end
-      - record-error
-      - set-status
-    ignore-check-signatures:
-      - "lootlocker.io/go-backend/tracing.(Tracer).Start"
-      - "lootlocker.io/go-backend/tracing.(FiberTracer).Start"
 
   errorlint:
     asserts: false # shut. up. about. type. asserts.
