@@ -5,6 +5,7 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
+  workflow_dispatch:
 
 jobs:
   lint:
@@ -16,7 +17,7 @@ jobs:
           go-version-file: "./go.mod"
           cache: false
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v4
+        uses: golangci/golangci-lint-action@v6
         with:
           version: latest
-          args: --timeout=5m --out-format=github-actions --issues-exit-code 0 --new-from-rev=main
+          args: --timeout=5m --out-format=colored-line-number --issues-exit-code 0 --new-from-rev=main
