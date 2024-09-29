@@ -1,12 +1,94 @@
+run:
+  modules-download-mode: readonly
+  concurrency: 4
+  timeout: 10m
+output:
+  sort-results: true
+  show-stats: true
+severity:
+  default-severity: warning # especially important for ci!
 linters:
   enable:
-    - revive 
-    - ifshort 
-    - gocritic 
-    - dogsled 
-    - gosec 
-    - misspell 
-    - goconst 
-    - goconst 
-    - noctx 
-    - godot
+      # First, the default linters.
+      - errcheck
+      - gosimple
+      - govet
+      - ineffassign
+      - staticcheck
+      - unused
+      # Then, the choice ones.
+      - revive
+      - gocritic
+      - dogsled
+      - gosec
+      - misspell
+      - goconst
+      - bodyclose
+      - sqlclosecheck
+      - rowserrcheck
+      - goconst
+      - noctx
+      - wastedassign
+      - unparam
+      - prealloc
+      - unconvert
+      - gofumpt
+      - promlinter
+      - tparallel
+      - nakedret
+      - promlinter
+      - sloglint
+      - spancheck
+      - bidichk
+      - containedctx
+      - contextcheck
+      - errorlint
+      - gocyclo
+
+# https://golangci-lint.run/usage/linters/#tagliatelle
+linters-settings:
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - style
+    disabled-tags:
+      - experimental
+    settings:
+      # tests have no impact on production code, so we can ignore them
+      # convenience trumps performance here.
+      rangeValCopy:
+        skipTestFuncs: true
+
+
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+
+  nakedret:
+    # never, ever do naked returns.
+    max-func-lines: 1 # default is 30
+  
+  tagliatelle:
+    case:
+      use-field-name: true
+      rules:
+        json: snake
+  
+  promlinter:
+    strict: true
+
+  rowserrcheck:
+    packages:
+      - "github.com/jmoiron/sqlx"
+
+  spancheck:
+    checks:
+      - end
+      - record-error
+      - set-status
+    ignore-check-signatures:
+      - "lootlocker.io/go-backend/tracing.(Tracer).Start"
+      - "lootlocker.io/go-backend/tracing.(FiberTracer).Start"
+
+  errorlint:
+    asserts: false # shut. up. about. type. asserts.
